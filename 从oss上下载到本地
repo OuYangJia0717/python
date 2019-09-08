@@ -1,0 +1,31 @@
+import oss2
+import os
+from concurrent.futures import ThreadPoolExecutor, wait
+#下载函数
+def Download(path,localPath,filename):
+    bucket.get_object_to_file(path, os.path.join(localPath, filename))
+
+# 阿里云主账号AccessKey拥有所有API的访问权限，风险很高。强烈建议您创建并使用RAM账号进行API访问或日常运维，请登录 https://ram.console.aliyun.com 创建RAM账号。
+auth = oss2.Auth('账号','密码')
+
+# Endpoint以北京为例，其它Region请按实际情况填写。
+bucket = oss2.Bucket(auth, 'oss-cn-shenzhen.aliyuncs.com', '当前账号下的文件夹名')
+
+listP=['C2CBFD22-FAFA-4D9A-AF48-908C08021E96','A946D16A-8BDA-4BEB-A5CE-34964C38DFA3','373C65E7-3380-4CAB-8EF4-B636FCC03C0B','E1C1D777-C8C3-4775-9CC8-EFBB83C652E7','871FE067-C8E1-4480-876F-A88BA96E204F','8799E462-C44B-4F20-9820-B17B80F2C888','170DE543-65F3-4864-99F9-4C6BC70D2152','22058468-CEBA-49B5-A093-0011D5E49205','9A405DE0-5C1D-48BA-887F-81D63C539720','0EA23605-869F-41B4-A343-FCA04899BF4F','DDD18D1A-4D5C-48C2-A562-E91BADE7B690','8BB6C4D6-A2EB-45F2-BBAB-E6B7FC45716C','5418D375-C863-4527-933A-818752DF8641','83D1BD90-B224-425C-9DD1-AA077E244E8D','DE8794C8-7FF4-4AD1-BDB5-BCB16F68DC5F','A412E16C-4580-4364-87E9-3D1A667DA95D','E63B4189-4131-4A14-97AA-923D3B1D8CC8','F040CC0E-1E92-4530-BB98-5191CB657B8C','629BE9F1-DA64-4601-AD16-D759D5715799']
+
+result=[]
+for l in listP:
+    pool = ThreadPoolExecutor(max_workers=10)#线程池
+    # oss2.ObjectIteratorr用于遍历文件。
+    for b in oss2.ObjectIterator(bucket,prefix=l):
+        d=os.path.dirname(b.key) #拿到文件名前的路径
+        f=os.path.basename(b.key) #拿到文件名
+        localPath=os.path.join(r'D:\Python测试',d)
+        if not os.path.exists(localPath):
+            os.makedirs(localPath)
+        # 下载OSS文件到本地文件。
+        r=pool.submit(Download,b.key,localPath,f)
+        result.append(r)
+    wait(result)       
+    print("{0}样本下载完成".format(l))
+    # s=str(b.key).split(r'/')[-1]   拿到拆分后的最后一个，也就是拿到文件名
