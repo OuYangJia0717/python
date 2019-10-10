@@ -1,0 +1,57 @@
+# coding=utf-8
+import os
+import xlrd
+import pandas
+import re
+import sys
+import shutil
+xlpath=r'C:\Users\TZC\Desktop\2019诊断结果'
+classnames = ['癌', 'CINⅢ', 'CINⅡ-Ⅲ', 'CINⅡ', 'CINⅠ-Ⅱ', 'CINⅠ', '慢性宫颈炎']
+sheetcolnames = ['病理号', '病理诊断']
+filepath = r"F:\JPG\2019\分类_5"
+dstpath = r"F:\JPG\2019\8_8"
+# 15,14,18,16,14,12
+colnum = 15
+for xlpath1 in os.listdir(xlpath):
+    print(xlpath1)
+    xlspath=os.path.join(xlpath,xlpath1)
+    worksheets = xlrd.open_workbook(filename=xlspath, logfile=sys.stdout, verbosity=1, use_mmap=1,
+                                    file_contents=None, encoding_override=None, formatting_info=False, on_demand=False, ragged_rows=False)
+    worksheet = worksheets.sheets()[0]
+    # 循环Excel每一行
+    for x in range(0, worksheet.nrows, 1):
+        col = worksheet.row_values(x)
+
+        if x == 0:
+            for i in range(len(col)):
+                if col[i] == '病理诊断':
+                    colnum=i
+
+        # 循环类别
+        contorl = True
+        for name in classnames:
+            if contorl:
+                result = re.search(name, col[colnum], re.M | re.I)
+                if(result != None):
+                    code = int(col[0])
+                    # print(code)
+                    # 寻找本地样本
+                    for cod in os.listdir(filepath):
+                        # print("------------->{0}".format(cod))
+                        if(str(code) == cod.split('_')[0]):
+                            src = os.path.join(filepath, cod)
+                            dst = os.path.join(dstpath, col[colnum])
+                            # print(src)
+                            Savepath = os.path.join(dstpath, name)
+                            if os.path.exists(Savepath):
+                                shutil.move(
+                                    src, os.path.join(Savepath, cod))
+                            else:
+                                os.mkdir(Savepath)
+                                shutil.move(
+                                    src, os.path.join(Savepath, cod))
+                            print("{0}移动成功".format(cod))
+                            break
+                    contorl = False
+            else:
+                break
